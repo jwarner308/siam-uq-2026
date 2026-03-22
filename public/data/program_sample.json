@@ -1,0 +1,192 @@
+{
+  "conference": {
+    "name": "2026 SIAM Conference on Uncertainty Quantification (UQ26)",
+    "dates": "March 21-25, 2026",
+    "location": "Hyatt Regency Minneapolis, Minneapolis, Minnesota, U.S."
+  },
+  "days": [
+    {
+      "date": "2026-03-21",
+      "label": "Saturday, March 21",
+      "timeSlots": []
+    },
+    {
+      "date": "2026-03-22",
+      "label": "Sunday, March 22",
+      "timeSlots": [
+        {
+          "start": "9:00 AM",
+          "end": "10:30 AM",
+          "sessions": [
+            {
+              "id": "IP1",
+              "code": "88012",
+              "title": "Denoising Diffusion Models: From Generative Modelling to Bayesian Computation",
+              "type": "IP",
+              "location": "Nicollet Ballroom - Main Level",
+              "organizers": [],
+              "chair": "Eldad Haber",
+              "cancelled": false,
+              "talks": [
+                {
+                  "id": "t1",
+                  "title": "Denoising Diffusion Models: From Generative Modelling to Bayesian Computation",
+                  "time": "9:00-9:45",
+                  "speakers": [{"name": "Arnaud Doucet", "affiliation": "Google DeepMind, UK"}],
+                  "abstract": "This talk explores denoising diffusion models and their applications to inverse problems."
+                }
+              ]
+            },
+            {
+              "id": "IP2",
+              "code": "88013",
+              "title": "Non-intrusive Structural-Preserving Sequential Data Assimilation",
+              "type": "IP",
+              "location": "Nicollet Ballroom - Main Level",
+              "organizers": [],
+              "chair": "",
+              "cancelled": false,
+              "talks": [
+                {
+                  "id": "t2",
+                  "title": "Non-intrusive Structural-Preserving Sequential Data Assimilation",
+                  "time": "9:45-10:30",
+                  "speakers": [{"name": "Karen Willcox", "affiliation": "University of Texas at Austin, U.S."}],
+                  "abstract": "This talk discusses non-intrusive methods for data assimilation."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "start": "11:00 AM",
+          "end": "1:00 PM",
+          "sessions": [
+            {
+              "id": "MS1",
+              "code": "86005",
+              "title": "Structure-informed Uncertainty Quantification in Machine Learning",
+              "type": "MS",
+              "location": "Nicollet Ballroom - Main Level",
+              "organizers": ["Ziyu Chen", "Matt Li"],
+              "chair": "",
+              "cancelled": false,
+              "talks": [
+                {
+                  "id": "157748",
+                  "title": "Statistical Learning Guarantees for Group-Invariant Barron Functions",
+                  "time": "11:00-11:25",
+                  "speakers": [{"name": "Yahong Yang", "affiliation": "Georgia Institute of Technology, U.S."}],
+                  "abstract": "The research examines how neural networks that respect group symmetries perform in terms of generalization."
+                },
+                {
+                  "id": "152108",
+                  "title": "Canonical Bayesian System Identification",
+                  "time": "11:30-11:55",
+                  "speakers": [
+                    {"name": "Andrey Bryutkin", "affiliation": "Massachusetts Institute of Technology, U.S."},
+                    {"name": "Youssef M. Marzouk", "affiliation": "Massachusetts Institute of Technology, U.S."}
+                  ],
+                  "abstract": "We present a canonical approach to Bayesian system identification."
+                },
+                {
+                  "id": "152109",
+                  "title": "Uncertainty Quantification in Synchronization Problems",
+                  "time": "12:00-12:25",
+                  "speakers": [{"name": "Yunpeng Shi", "affiliation": "University of California, Davis, U.S."}],
+                  "abstract": "This talk addresses UQ in synchronization problems."
+                },
+                {
+                  "id": "152110",
+                  "title": "Data Augmentation: A Fourier Analysis Perspective",
+                  "time": "12:30-12:55",
+                  "speakers": [{"name": "Melanie Weber", "affiliation": "Harvard University, U.S."}],
+                  "abstract": "We study data augmentation from a Fourier analysis perspective."
+                }
+              ]
+            },
+            {
+              "id": "MS2",
+              "code": "87132",
+              "title": "Probabilistic Manifold Learning and Deep Embeddings - Part I",
+              "type": "MS",
+              "location": "Regency Room - 2nd Level",
+              "organizers": [],
+              "chair": "",
+              "cancelled": false,
+              "talks": [
+                {
+                  "id": "153562",
+                  "title": "Manifold Learning with Probabilistic Guarantees",
+                  "time": "11:00-11:25",
+                  "speakers": [{"name": "Sample Speaker", "affiliation": "Sample University"}],
+                  "abstract": "Sample abstract for manifold learning talk."
+                }
+              ]
+            },
+            {
+              "id": "MT1",
+              "code": "87535",
+              "title": "Diffusion Models for Inverse Problems: Theory and Practice",
+              "type": "MT",
+              "location": "Skyway - 2nd Level",
+              "organizers": [],
+              "chair": "",
+              "cancelled": false,
+              "talks": [
+                {
+                  "id": "154508",
+                  "title": "Tutorial: Diffusion Models for Inverse Problems",
+                  "time": "11:00-1:00",
+                  "speakers": [{"name": "Tutorial Speaker", "affiliation": "Tutorial University"}],
+                  "abstract": "A comprehensive tutorial on diffusion models for inverse problems."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "date": "2026-03-23",
+      "label": "Monday, March 23",
+      "timeSlots": [
+        {
+          "start": "8:30 AM",
+          "end": "10:30 AM",
+          "sessions": [
+            {
+              "id": "MS50",
+              "code": "85927",
+              "title": "UQ in Scientific ML: Surrogates",
+              "type": "MS",
+              "location": "Nicollet Ballroom - Main Level",
+              "organizers": [],
+              "chair": "",
+              "cancelled": false,
+              "talks": [
+                {
+                  "id": "t50a",
+                  "title": "Neural Network Surrogates for UQ",
+                  "time": "8:30-8:55",
+                  "speakers": [{"name": "Sample Speaker A", "affiliation": "University A"}],
+                  "abstract": "Abstract for surrogate talk."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "date": "2026-03-24",
+      "label": "Tuesday, March 24",
+      "timeSlots": []
+    },
+    {
+      "date": "2026-03-25",
+      "label": "Wednesday, March 25",
+      "timeSlots": []
+    }
+  ]
+}
