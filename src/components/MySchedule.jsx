@@ -11,7 +11,9 @@ export default function MySchedule({ program }) {
 
   // Parse a time string into minutes since midnight
   // Handles "9:30 AM" (12-hour) and "14:30" (24-hour)
-  const parseTime = useCallback((str) => {
+  // For bare times like "5:00" without AM/PM, use hintMinutes from the
+  // session timeSlot to resolve AM vs PM ambiguity.
+  const parseTime = useCallback((str, hintMinutes) => {
     if (!str) return null;
     const match12 = str.match(/(\d+):(\d+)\s*(AM|PM)/i);
     if (match12) {
@@ -24,20 +26,35 @@ export default function MySchedule({ program }) {
     }
     const match24 = str.match(/^(\d+):(\d+)$/);
     if (match24) {
-      return parseInt(match24[1], 10) * 60 + parseInt(match24[2], 10);
+      let hours = parseInt(match24[1], 10);
+      const mins = parseInt(match24[2], 10);
+      let result = hours * 60 + mins;
+      // Bare times (e.g. "5:00") are ambiguous — if the session's timeSlot
+      // starts in the afternoon/evening and our parsed time is morning,
+      // it's almost certainly PM
+      if (hintMinutes != null && hours < 12 && result < hintMinutes) {
+        result += 12 * 60;
+      }
+      return result;
     }
     return null;
   }, []);
 
-  // Get the start time in minutes for a talk entry
-  const getTalkStartMinutes = useCallback((entry) => {
-    if (entry.talk.time) {
-      const parts = entry.talk.time.split("-");
-      const start = parseTime(parts[0].trim());
-      if (start !== null) return start;
-    }
+  // Get the start time in minutes for the session-level timeSlot (always has AM/PM)
+  const getTimeSlotMinutes = useCallback((entry) => {
     return parseTime(entry.timeSlot.start) ?? 0;
   }, [parseTime]);
+
+  // Get the start time in minutes for a talk entry
+  const getTalkStartMinutes = useCallback((entry) => {
+    const tsMinutes = getTimeSlotMinutes(entry);
+    if (entry.talk.time) {
+      const parts = entry.talk.time.split("-");
+      const start = parseTime(parts[0].trim(), tsMinutes);
+      if (start !== null) return start;
+    }
+    return tsMinutes;
+  }, [parseTime, getTimeSlotMinutes]);
 
   // Build sorted schedule grouped by day and time
   const schedule = useMemo(() => {
@@ -73,16 +90,17 @@ export default function MySchedule({ program }) {
 
     // Get start/end in minutes for a talk, using individual talk.time if available
     const getTalkRange = (entry) => {
+      const tsMinutes = getTimeSlotMinutes(entry);
       if (entry.talk.time) {
         // Individual talk time, e.g. "11:00-11:25"
         const parts = entry.talk.time.split("-");
         if (parts.length === 2) {
-          const start = parseTime(parts[0].trim());
-          const end = parseTime(parts[1].trim());
+          const start = parseTime(parts[0].trim(), tsMinutes);
+          const end = parseTime(parts[1].trim(), tsMinutes);
           if (start !== null && end !== null) return { start, end };
         }
         // Single time without end — assume 25 min
-        const start = parseTime(entry.talk.time.trim());
+        const start = parseTime(entry.talk.time.trim(), tsMinutes);
         return start !== null ? { start, end: start + 25 } : null;
       }
       // Fall back to session-level time slot
