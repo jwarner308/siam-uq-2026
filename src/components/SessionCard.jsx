@@ -7,7 +7,10 @@ export default function SessionCard({ session }) {
 
   return (
     <div
-      onClick={() => navigate(`/session/${code}`)}
+      onClick={() => {
+        sessionStorage.setItem("programScrollY", String(window.scrollY));
+        navigate(`/session/${code}`);
+      }}
       style={styles.card}
       className={cancelled ? "cancelled" : ""}
     >

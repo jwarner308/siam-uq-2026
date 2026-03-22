@@ -17,9 +17,43 @@ export default function DayView({ program }) {
   const sectionRefs = useRef({});
   const tabBarRef = useRef(null);
   const isScrollingTo = useRef(false);
+  const restoringScroll = useRef(false);
+
+  // Disable browser's automatic scroll restoration
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+  }, []);
 
   // On mount or when navigating with a date param, scroll to that day
+  // (but restore saved scroll position if returning from a detail page)
   useEffect(() => {
+    const savedY = sessionStorage.getItem("programScrollY");
+    if (savedY !== null) {
+      sessionStorage.removeItem("programScrollY");
+      restoringScroll.current = true;
+      isScrollingTo.current = true;
+      const targetY = Number(savedY);
+      // Use requestAnimationFrame + retry to ensure DOM is ready
+      const tryRestore = () => {
+        // Page must be tall enough to scroll to the saved position
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        if (maxScroll >= targetY) {
+          window.scrollTo(0, targetY);
+          setTimeout(() => {
+            isScrollingTo.current = false;
+            restoringScroll.current = false;
+          }, 200);
+        } else {
+          // DOM not fully laid out yet, retry next frame
+          requestAnimationFrame(tryRestore);
+        }
+      };
+      requestAnimationFrame(tryRestore);
+      return;
+    }
+
     const target = date || "2026-03-22";
     setActiveDate(target);
     const el = sectionRefs.current[target];
