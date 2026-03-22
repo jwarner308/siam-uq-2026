@@ -33,7 +33,7 @@ const styles = {
     gap: 10,
     marginBottom: 8,
     position: "sticky",
-    top: 70,
+    top: 86,
     background: "var(--bg)",
     padding: "8px 0 4px",
     zIndex: 10,
