@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import TimeSlot from "./TimeSlot.jsx";
 
@@ -13,56 +13,162 @@ const DAY_TABS = [
 export default function DayView({ program }) {
   const { date } = useParams();
   const navigate = useNavigate();
+  const [activeDate, setActiveDate] = useState(date || "2026-03-22");
+  const sectionRefs = useRef({});
+  const tabBarRef = useRef(null);
+  const isScrollingTo = useRef(false);
 
-  // Default to Sunday (first full day)
-  const activeDate = date || "2026-03-22";
-  const day = program.days.find((d) => d.date === activeDate);
+  // On mount or when navigating with a date param, scroll to that day
+  useEffect(() => {
+    const target = date || "2026-03-22";
+    setActiveDate(target);
+    const el = sectionRefs.current[target];
+    if (el) {
+      // Small delay to let layout settle
+      setTimeout(() => {
+        const tabBarHeight = tabBarRef.current
+          ? tabBarRef.current.getBoundingClientRect().bottom
+          : 70;
+        const y = el.getBoundingClientRect().top + window.scrollY - tabBarHeight;
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }, 50);
+    }
+  }, [date]);
+
+  // Scroll-based tracking of which day section is visible
+  useEffect(() => {
+    const detectActiveDay = () => {
+      if (isScrollingTo.current) return;
+
+      const tabBarBottom = tabBarRef.current
+        ? tabBarRef.current.getBoundingClientRect().bottom
+        : 70;
+
+      // Find the last section whose top has scrolled past (or near) the tab bar
+      let best = null;
+      for (const tab of DAY_TABS) {
+        const el = sectionRefs.current[tab.date];
+        if (!el) continue;
+        const dist = el.getBoundingClientRect().top - tabBarBottom;
+        if (dist <= 40) {
+          best = tab.date;
+        }
+      }
+
+      // If nothing has scrolled past yet, use the first available day
+      if (!best) {
+        for (const tab of DAY_TABS) {
+          if (sectionRefs.current[tab.date]) {
+            best = tab.date;
+            break;
+          }
+        }
+      }
+
+      if (best) {
+        setActiveDate((prev) => {
+          if (prev !== best) {
+            window.history.replaceState(null, "", `#/day/${best}`);
+          }
+          return best;
+        });
+      }
+    };
+
+    // Run once on mount to set the correct initial active date
+    detectActiveDay();
+
+    window.addEventListener("scroll", detectActiveDay, { passive: true });
+    return () => window.removeEventListener("scroll", detectActiveDay);
+  }, []);
+
+  const scrollToDay = useCallback(
+    (targetDate) => {
+      setActiveDate(targetDate);
+      navigate(`/day/${targetDate}`, { replace: true });
+
+      const el = sectionRefs.current[targetDate];
+      if (el) {
+        isScrollingTo.current = true;
+        const tabBarHeight = tabBarRef.current
+          ? tabBarRef.current.getBoundingClientRect().bottom -
+            tabBarRef.current.getBoundingClientRect().top
+          : 70;
+
+        const y =
+          el.getBoundingClientRect().top + window.scrollY - tabBarHeight;
+        window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+
+        // Re-enable scroll-based updates after the scroll animation settles
+        setTimeout(() => {
+          isScrollingTo.current = false;
+        }, 800);
+      }
+    },
+    [navigate]
+  );
 
   return (
     <div>
-      {/* Header */}
-      <div style={styles.header}>
-        <div style={styles.title}>SIAM UQ 2026</div>
+      {/* Sticky header + tabs */}
+      <div ref={tabBarRef} style={styles.stickyTop}>
+        <div style={styles.header}>
+          <div style={styles.title}>SIAM UQ 2026</div>
+        </div>
+        <div style={styles.tabBar}>
+          {DAY_TABS.map((tab) => (
+            <button
+              key={tab.date}
+              onClick={() => scrollToDay(tab.date)}
+              style={{
+                ...styles.tab,
+                ...(tab.date === activeDate ? styles.tabActive : {}),
+              }}
+            >
+              <div style={styles.tabDay}>{tab.short}</div>
+              <div style={styles.tabDate}>{tab.label}</div>
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Day tabs */}
-      <div style={styles.tabBar}>
-        {DAY_TABS.map((tab) => (
-          <button
-            key={tab.date}
-            onClick={() => navigate(`/day/${tab.date}`)}
-            style={{
-              ...styles.tab,
-              ...(tab.date === activeDate ? styles.tabActive : {}),
-            }}
-          >
-            <div style={styles.tabDay}>{tab.short}</div>
-            <div style={styles.tabDate}>{tab.label}</div>
-          </button>
-        ))}
-      </div>
-
-      {/* Time slots */}
+      {/* All days rendered in one scrollable list */}
       <div className="page-content">
-        {day ? (
-          day.timeSlots.map((ts, i) => (
-            <TimeSlot key={i} timeSlot={ts} />
-          ))
-        ) : (
-          <div className="empty-state">
-            <p>No sessions for this day.</p>
+        {program.days.map((day) => (
+          <div
+            key={day.date}
+            ref={(el) => (sectionRefs.current[day.date] = el)}
+          >
+            {/* Day divider */}
+            <div style={styles.dayDivider}>
+              <div style={styles.dayDividerLine} />
+              <div style={styles.dayDividerLabel}>
+                {DAY_TABS.find((t) => t.date === day.date)?.short || ""}{" "}
+                {DAY_TABS.find((t) => t.date === day.date)?.label || day.date}
+              </div>
+              <div style={styles.dayDividerLine} />
+            </div>
+
+            {day.timeSlots.map((ts, i) => (
+              <TimeSlot key={i} timeSlot={ts} />
+            ))}
           </div>
-        )}
+        ))}
       </div>
     </div>
   );
 }
 
 const styles = {
-  header: {
+  stickyTop: {
+    position: "sticky",
+    top: 0,
+    zIndex: 50,
     background: "var(--primary)",
+  },
+  header: {
     color: "#fff",
-    padding: "14px 16px 8px",
+    padding: "14px 16px 4px",
     textAlign: "center",
   },
   title: {
@@ -72,14 +178,10 @@ const styles = {
   },
   tabBar: {
     display: "flex",
-    background: "var(--primary)",
     padding: "0 4px 8px",
     gap: 4,
     overflowX: "auto",
     justifyContent: "center",
-    position: "sticky",
-    top: 0,
-    zIndex: 50,
   },
   tab: {
     padding: "6px 12px",
@@ -99,5 +201,24 @@ const styles = {
   },
   tabDate: {
     fontSize: 10,
+  },
+  dayDivider: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    margin: "24px 0 12px",
+  },
+  dayDividerLine: {
+    flex: 1,
+    height: 1,
+    background: "var(--border)",
+  },
+  dayDividerLabel: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: "var(--primary)",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    whiteSpace: "nowrap",
   },
 };

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSchedule } from "../hooks/useSchedule.jsx";
 import { getTalkInfo } from "../utils/data.js";
@@ -9,6 +9,36 @@ export default function MySchedule({ program }) {
   const navigate = useNavigate();
   const [expandedTalk, setExpandedTalk] = useState(null);
 
+  // Parse a time string into minutes since midnight
+  // Handles "9:30 AM" (12-hour) and "14:30" (24-hour)
+  const parseTime = useCallback((str) => {
+    if (!str) return null;
+    const match12 = str.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (match12) {
+      let hours = parseInt(match12[1], 10);
+      const mins = parseInt(match12[2], 10);
+      const period = match12[3].toUpperCase();
+      if (period === "PM" && hours !== 12) hours += 12;
+      if (period === "AM" && hours === 12) hours = 0;
+      return hours * 60 + mins;
+    }
+    const match24 = str.match(/^(\d+):(\d+)$/);
+    if (match24) {
+      return parseInt(match24[1], 10) * 60 + parseInt(match24[2], 10);
+    }
+    return null;
+  }, []);
+
+  // Get the start time in minutes for a talk entry
+  const getTalkStartMinutes = useCallback((entry) => {
+    if (entry.talk.time) {
+      const parts = entry.talk.time.split("-");
+      const start = parseTime(parts[0].trim());
+      if (start !== null) return start;
+    }
+    return parseTime(entry.timeSlot.start) ?? 0;
+  }, [parseTime]);
+
   // Build sorted schedule grouped by day and time
   const schedule = useMemo(() => {
     const entries = [];
@@ -17,11 +47,11 @@ export default function MySchedule({ program }) {
       if (info) entries.push(info);
     }
 
-    // Sort by day then time
+    // Sort by day then by actual talk start time
     entries.sort((a, b) => {
       const dayCompare = a.day.date.localeCompare(b.day.date);
       if (dayCompare !== 0) return dayCompare;
-      return a.timeSlot.start.localeCompare(b.timeSlot.start);
+      return getTalkStartMinutes(a) - getTalkStartMinutes(b);
     });
 
     // Group by day
@@ -35,22 +65,45 @@ export default function MySchedule({ program }) {
     }
 
     return Object.values(grouped);
-  }, [savedTalks]);
+  }, [savedTalks, getTalkStartMinutes]);
 
   // Detect conflicts (overlapping talks)
   const conflicts = useMemo(() => {
     const set = new Set();
+
+    // Get start/end in minutes for a talk, using individual talk.time if available
+    const getTalkRange = (entry) => {
+      if (entry.talk.time) {
+        // Individual talk time, e.g. "11:00-11:25"
+        const parts = entry.talk.time.split("-");
+        if (parts.length === 2) {
+          const start = parseTime(parts[0].trim());
+          const end = parseTime(parts[1].trim());
+          if (start !== null && end !== null) return { start, end };
+        }
+        // Single time without end — assume 25 min
+        const start = parseTime(entry.talk.time.trim());
+        return start !== null ? { start, end: start + 25 } : null;
+      }
+      // Fall back to session-level time slot
+      const start = parseTime(entry.timeSlot.start);
+      const end = parseTime(entry.timeSlot.end);
+      return start !== null && end !== null ? { start, end } : null;
+    };
+
     for (const group of schedule) {
       const talks = group.talks;
       for (let i = 0; i < talks.length; i++) {
         for (let j = i + 1; j < talks.length; j++) {
           const a = talks[i];
           const b = talks[j];
-          // Simple overlap check: same time slot
-          if (
-            a.timeSlot.start === b.timeSlot.start &&
-            a.timeSlot.end === b.timeSlot.end
-          ) {
+          const rangeA = getTalkRange(a);
+          const rangeB = getTalkRange(b);
+
+          if (!rangeA || !rangeB) continue;
+
+          // Two ranges overlap if one starts before the other ends
+          if (rangeA.start < rangeB.end && rangeB.start < rangeA.end) {
             set.add(a.talk.id);
             set.add(b.talk.id);
           }
